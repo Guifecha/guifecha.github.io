@@ -393,7 +393,7 @@ function checkCollision(model, forest) {
 }
 
 function animate(renderer, scene, camera) {
-    const speed = 100;
+    const speed = 10;
     let velocityY = 0;
     
     //checkBoundaries(model.position, -10000, 10000, -16000, 4000);
