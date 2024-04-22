@@ -393,7 +393,7 @@ function checkCollision(model, forest) {
 }
 
 function animate(renderer, scene, camera) {
-    const speed = 10;
+    const speed = 25;
     let velocityY = 0;
     
     checkBoundaries(model.position, -10000, 10000, -16000, 4000);
@@ -431,10 +431,10 @@ function animate(renderer, scene, camera) {
         isTurningBack = false;
     }
     
-    /*if (model.position.z > -1000) { 
+    if (model.position.z > -1000) { 
         showWinScreen();
         
-    }*/
+    }
     
     if (checkCollision(model, forest)) {
         console.log('Collision detected!');
@@ -490,10 +490,10 @@ window.onload = function() {
     addlight(scene);
     createGround(scene);
     createSkybox(scene);
-    /*createForest(scene, -500, -5000);
+    createForest(scene, -500, -5000);
     createForest(scene, 3200, -8000);
     createForest(scene, -2105, -2000);
-    createForest(scene, -5590, -6000);*/
+    createForest(scene, -5590, -6000);
     createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
     
