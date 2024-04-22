@@ -1,2 +1,0 @@
-# ICG
-Project for ICG
