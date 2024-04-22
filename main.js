@@ -309,7 +309,7 @@ function toggleLight() {
     setTimeout(toggleLight, time);
 }
 
-/*document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function(event) {
     const key = event.key;
     if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
         showLoseScreen();
@@ -320,7 +320,7 @@ document.addEventListener('mousemove', function(event) {
     if (isRedLight && document.pointerLockElement) {
         showLoseScreen();
     }
-}, false);*/
+}, false);
 
 
 window.addEventListener('keydown', function(event) {
@@ -396,7 +396,7 @@ function animate(renderer, scene, camera) {
     const speed = 10;
     let velocityY = 0;
     
-    //checkBoundaries(model.position, -10000, 10000, -16000, 4000);
+    checkBoundaries(model.position, -10000, 10000, -16000, 4000);
     // Calculate the forward and right vectors of the camera
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
