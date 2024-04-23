@@ -74,7 +74,7 @@ function createGround(scene) {
 }
 
 function addlight(scene) {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
     const light2 = new THREE.DirectionalLight(0xffffff, 2);
     light2.position.set(2000, 4000, -10000);
@@ -89,10 +89,10 @@ function addlight(scene) {
 
     scene.add(light2);
     light2.castShadow = true;
-    light2.shadow.mapSize.width = 8192; // default
-    light2.shadow.mapSize.height = 8192; // default
+    light2.shadow.mapSize.width = 4096; // default
+    light2.shadow.mapSize.height = 4096; // default
     light2.shadow.camera.near = 10; // default
-    light2.shadow.camera.far = 400000; // default
+    light2.shadow.camera.far = 50000; // default
     light2.shadow.camera.left = 20000;
     light2.shadow.camera.right = -20000;
     light2.shadow.camera.top = 30000;
@@ -205,7 +205,7 @@ function loadModel(scene, camera, renderer) {
         const randomX = Math.random() * 15000 - 7500;
         model.position.set(randomX, 0, -13500);
         camera.position.set(0, 170, 0); // Adjust the y value to match the model's height
-        model.rotation.y = Math.PI; // Adjust this value to rotate the model
+        camera.rotation.y = Math.PI; // Adjust this value to rotate the camera
 
         if (model.animations && model.animations.length > 0) {
             mixer = new THREE.AnimationMixer(model);
