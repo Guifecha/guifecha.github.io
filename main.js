@@ -242,10 +242,10 @@ function toggleLight() {
     if (isRedLight) {
         isRedLight = false;
         isTurningBack = true;
-        targetRotation = 2 * Math.PI; 
+        targetRotation = Math.PI; 
     } else {
-        targetRotation = Math.PI;
-        // Add a delay before setting isRedLight to true
+        targetRotation = 0;
+ 
         setTimeout(() => {
             isRedLight = true;
         }, 500); // Adjust this value to change the delay
