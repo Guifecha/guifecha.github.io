@@ -26,7 +26,7 @@ document.addEventListener('keyup', function (event) {
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 45, 30000);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 45, 70000);
 
 const manager = new THREE.LoadingManager();
 
@@ -55,20 +55,20 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 function createGround(scene) {
-    var groundTexture = new THREE.TextureLoader().load( 'imports/textures/floor2.jpg' );
+    var groundTexture = new THREE.TextureLoader().load( 'imports/textures/floor.jpg' );
     groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
-    groundTexture.repeat.set( 100, 100 );
+    groundTexture.repeat.set( 50, 50 );
     groundTexture.anisotropy = 16;
     groundTexture.encoding = THREE.sRGBEncoding;
 
     var groundMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, map: groundTexture});
 
-    var groundGeometry = new THREE.PlaneGeometry( 20000, 20000 );
+    var groundGeometry = new THREE.PlaneGeometry( 11000, 11000 );
 
     var ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true; // Set the ground to receive shadows
     ground.rotation.x = - Math.PI / 2; // rotate it to lie flat
-    ground.position.set(0,0,-6000)
+    ground.position.set(0,0,0)
 
     scene.add( ground );
 }
@@ -120,72 +120,22 @@ function createStartFinishLine(scene) {
     scene.add(finishLine);
 }
 
-function createSkybox(scene) {
-    let materialArray = [];
-    let texture_ft = new THREE.TextureLoader().load( 'imports/textures/yonder_ft.jpg');
-    let texture_bk = new THREE.TextureLoader().load( 'imports/textures/yonder_bk.jpg');
-    let texture_up = new THREE.TextureLoader().load( 'imports/textures/yonder_up.jpg');
-    let texture_dn = new THREE.TextureLoader().load( 'imports/textures/yonder_dn.jpg');
-    let texture_rt = new THREE.TextureLoader().load( 'imports/textures/yonder_rt.jpg');
-    let texture_lf = new THREE.TextureLoader().load( 'imports/textures/yonder_lf.jpg');
-      
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_ft }));
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_bk }));
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_up }));
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_dn }));
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_rt }));
-    materialArray.push(new THREE.MeshBasicMaterial( { map: texture_lf }));
 
-    for (let i = 0; i < 6; i++)
-        materialArray[i].side = THREE.BackSide;
-    let skyboxGeo = new THREE.BoxGeometry( 20000, 10500, 20000);
-    let skybox = new THREE.Mesh( skyboxGeo, materialArray );
-    skybox.position.set(0,4750,-6000)
-    scene.add( skybox );  
-}
+function create_sky(scene) {
+    var skyGeo = new THREE.SphereGeometry(5000, 25, 25);
+    var loader  = new THREE.TextureLoader();
 
-function createTree(cylinderHeight, cylinderRadius, coneHeight, baseConeRadius, positionx, positionz) {
-    const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-    const redMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    const cylinder = new THREE.Mesh(cylinderGeometry, redMaterial);
-    cylinder.castShadow = true;
-    cylinder.receiveShadow = true;
-    cylinder.position.y = cylinderHeight / 2.0;
-    const coneGeometry = new THREE.ConeGeometry(baseConeRadius, coneHeight, 32);
-    const greenMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const cone = new THREE.Mesh(coneGeometry, greenMaterial);
-    cone.castShadow = true;
-    cone.receiveShadow = true;
-    cone.position.y = cylinderHeight + coneHeight / 2.0;
-    const tree = new THREE.Group();
-    tree.add(cylinder);
-    tree.add(cone);
-    tree.position.x = positionx;
-    tree.position.z = positionz;
+    loader.load("imports/textures/sky.jpg", function(texture) {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(5, 5); // Repeat the texture 10 times in both directions
 
-    return tree;
-}
-
-const forest = new THREE.Group();
-function createForest(scene, xpos, zpos) {
-    
-    const tree1 = createTree(1000, 100, 300, 400, xpos-1000, zpos-1000);
-    forest.add(tree1);
-    const tree2 = createTree(500, 100, 200, 700, xpos+1050, zpos+1040);
-    forest.add(tree2);
-    const tree3 = createTree(130, 100, 200, 90, xpos+3200, zpos+3100);
-    forest.add(tree3);
-    const tree4 = createTree(1300, 100, 100, 120, xpos-3400, zpos-340);
-    forest.add(tree4);
-    const tree5 = createTree(250, 103, 300, 400, xpos-540, zpos-700);
-    forest.add(tree5);
-    const tree6 = createTree(725, 85, 500, 320, xpos+910, zpos+310);
-    forest.add(tree6);
-    const tree7 = createTree(386, 30, 400, 120, xpos+1200, zpos-1200);
-    forest.add(tree7);
-    const tree8 = createTree(100, 70, 200, 420, xpos-500, zpos+300);
-    forest.add(tree8);
-    scene.add(forest);
+        var skymaterial = new THREE.MeshPhongMaterial({ 
+            map: texture,
+        });
+        skymaterial.side = THREE.BackSide; // Set the side property on skymaterial
+        var sky = new THREE.Mesh(skyGeo, skymaterial);
+        scene.add(sky);
+    });
 }
 
 function createControls(camera, domElement) {
@@ -203,7 +153,7 @@ function loadModel(scene, camera, renderer) {
     loader.load('imports/models/Beach.fbx', function (object) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
-        model.position.set(randomX, 0, -13500);
+        model.position.set(randomX, 0, 0);
         camera.position.set(0, 170, 0); // Adjust the y value to match the model's height
         camera.rotation.y = Math.PI; // Adjust this value to rotate the camera
 
@@ -235,7 +185,7 @@ function loadModel2() {
         const startingRotation = 90 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
         model2.rotation.y = startingRotation;
 
-        const scaleFactor = 10; // Adjust this value to scale the model
+        const scaleFactor = 1; // Adjust this value to scale the model
         model2.scale.set(scaleFactor, scaleFactor, scaleFactor);
         
         if (model2.animations && model2.animations.length > 0) {
@@ -268,27 +218,26 @@ function checkBoundaries(object, minX, maxX, minZ, maxZ) {
     }
 }
 
-function addBuilding(xpos,zpos,rotation,scene) {
-    const loader = new GLTFLoader();
-    loader.load('imports/models/Building.glb', function (gltf) {
-        const building = gltf.scene;
-
-        // Set the building's position and scale here
-        building.position.set(xpos, 0, zpos);
-        const scaleFactor = 1300;
-        building.scale.set(scaleFactor,scaleFactor ,scaleFactor);
-        building.rotation.y = rotation; // Adjust this value to rotate the building
-
-        scene.add(building);
-        building.traverse(function (node) {
-            if (node.isMesh) {
-                node.castShadow = true;
-                node.receiveShadow = true;
-            }
-        })
-    });}
     
-
+    function addModel(path, scaleFactor, positionX, positionZ, rotation, scene) {
+        const loader = new GLTFLoader();
+        loader.load(path, function (gltf) {
+            const model = gltf.scene;
+    
+            // Set the model's position and scale here
+            model.position.set(positionX, 0.5, positionZ);
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            model.rotation.y = rotation; // Adjust this value to rotate the model
+    
+            scene.add(model);
+            model.traverse(function (node) {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    //node.receiveShadow = true;
+                }
+            })
+        });
+    }
 
 function toggleLight() {
     if (!model2) return;
@@ -309,7 +258,7 @@ function toggleLight() {
     setTimeout(toggleLight, time);
 }
 
-document.addEventListener('keydown', function(event) {
+/*document.addEventListener('keydown', function(event) {
     const key = event.key;
     if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
         showLoseScreen();
@@ -320,7 +269,7 @@ document.addEventListener('mousemove', function(event) {
     if (isRedLight && document.pointerLockElement) {
         showLoseScreen();
     }
-}, false);
+}, false);*/
 
 
 window.addEventListener('keydown', function(event) {
@@ -380,23 +329,13 @@ function showWinScreen() {
     });
 }
 
-function checkCollision(model, forest) {
-    for (let i = 0; i < forest.length; i++) {
-        let tree = forest[i];
-        let distance = model.position.distanceTo(tree.position);
 
-        if (distance < (model.size / 2 + tree.size / 2)) {
-            return true;
-        }
-    }
-    return false;
-}
 
 function animate(renderer, scene, camera) {
-    const speed = 25;
+    const speed = 1;
     let velocityY = 0;
     
-    checkBoundaries(model.position, -10000, 10000, -16000, 4000);
+    //checkBoundaries(model.position, -10000, 10000, -16000, 4000);
     // Calculate the forward and right vectors of the camera
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
@@ -432,13 +371,10 @@ function animate(renderer, scene, camera) {
     }
     
     if (model.position.z > -1000) { 
-        showWinScreen();
+        //showWinScreen();
         
     }
     
-    if (checkCollision(model, forest)) {
-        console.log('Collision detected!');
-    }
 
     if (isJumping) {
         velocityY -= 3;
@@ -489,16 +425,13 @@ function animate(renderer, scene, camera) {
 window.onload = function() {
     addlight(scene);
     createGround(scene);
-    createSkybox(scene);
-    createForest(scene, -500, -5000);
-    createForest(scene, 3200, -8000);
-    createForest(scene, -2105, -2000);
-    createForest(scene, -5590, -6000);
+    create_sky(scene);
     createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
+    //addModel('imports/models/Building.glb',1300, -8000, -1000, Math.PI/2, scene);
     
-    addBuilding(-8000,-8500,Math.PI/2,scene);
-    addBuilding(8000,-8500,-Math.PI/2,scene);
+    //addRoad('imports/models/Billboard.glb',1800, 0, -6400, -Math.PI/2, scene);
+
     loadModel2();
     loadModel(scene, camera, renderer);
 };
