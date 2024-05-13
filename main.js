@@ -63,12 +63,12 @@ function createGround(scene) {
 
     var groundMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, map: groundTexture});
 
-    var groundGeometry = new THREE.PlaneGeometry( 11000, 11000 );
+    var groundGeometry = new THREE.PlaneGeometry( 25000, 25000 );
 
     var ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true; // Set the ground to receive shadows
     ground.rotation.x = - Math.PI / 2; // rotate it to lie flat
-    ground.position.set(0,0,0)
+    ground.position.set(0,0,10000)
 
     scene.add( ground );
 }
@@ -122,7 +122,7 @@ function createStartFinishLine(scene) {
 
 
 function create_sky(scene) {
-    var skyGeo = new THREE.SphereGeometry(5000, 25, 25);
+    var skyGeo = new THREE.SphereGeometry(30000, 25, 25);
     var loader  = new THREE.TextureLoader();
 
     loader.load("imports/textures/sky.jpg", function(texture) {
@@ -133,7 +133,8 @@ function create_sky(scene) {
             map: texture,
         });
         skymaterial.side = THREE.BackSide; // Set the side property on skymaterial
-        var sky = new THREE.Mesh(skyGeo, skymaterial);
+        var sky = new THREE.Mesh(skyGeo, skymaterial)
+        sky.position.set(0, 0, 0);
         scene.add(sky);
     });
 }
@@ -153,9 +154,9 @@ function loadModel(scene, camera, renderer) {
     loader.load('imports/models/Beach.fbx', function (object) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
-        model.position.set(randomX, 0, 0);
+        model.position.set(randomX, 0, 15000);
         camera.position.set(0, 170, 0); // Adjust the y value to match the model's height
-        camera.rotation.y = Math.PI; // Adjust this value to rotate the camera
+        camera.rotation.y = 0; // Adjust this value to rotate the camera
 
         if (model.animations && model.animations.length > 0) {
             mixer = new THREE.AnimationMixer(model);
@@ -177,21 +178,16 @@ function loadModel(scene, camera, renderer) {
 }
 
 function loadModel2() {
-    const loader = new FBXLoader(manager);
-    loader.load('imports/models/Wizard.fbx', function (object) {
-        model2 = object;
+    const loader = new GLTFLoader();
+        loader.load('imports/models/Astronaut.glb', function (gltf) {
+        model2 = gltf.scene;
         model2.position.set(0, 0, -1000);
 
-        const startingRotation = 90 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
+        const startingRotation = 180 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
         model2.rotation.y = startingRotation;
 
-        const scaleFactor = 1; // Adjust this value to scale the model
+        const scaleFactor = 500; // Adjust this value to scale the model
         model2.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        
-        if (model2.animations && model2.animations.length > 0) {
-            mixer2 = new THREE.AnimationMixer(model2);
-            gunAction2 = mixer2.clipAction(model2.animations[11]); // shooting 11     wizard 6 nao faz nada 11 feitico
-        }
 
         scene.add(model2);
         model2.traverse(function (node) {
@@ -219,16 +215,17 @@ function checkBoundaries(object, minX, maxX, minZ, maxZ) {
 }
 
     
-    function addModel(path, scaleFactor, positionX, positionZ, rotation, scene) {
+    function addModel(path, scaleFactor, positionX,positionY, positionZ, rotation, scene) {
         const loader = new GLTFLoader();
         loader.load(path, function (gltf) {
             const model = gltf.scene;
     
             // Set the model's position and scale here
-            model.position.set(positionX, 0.5, positionZ);
+            model.position.set(positionX, positionY, positionZ);
             model.scale.set(scaleFactor, scaleFactor, scaleFactor);
             model.rotation.y = rotation; // Adjust this value to rotate the model
-    
+            
+
             scene.add(model);
             model.traverse(function (node) {
                 if (node.isMesh) {
@@ -258,7 +255,7 @@ function toggleLight() {
     setTimeout(toggleLight, time);
 }
 
-/*document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function(event) {
     const key = event.key;
     if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
         showLoseScreen();
@@ -269,7 +266,7 @@ document.addEventListener('mousemove', function(event) {
     if (isRedLight && document.pointerLockElement) {
         showLoseScreen();
     }
-}, false);*/
+}, false);
 
 
 window.addEventListener('keydown', function(event) {
@@ -332,7 +329,7 @@ function showWinScreen() {
 
 
 function animate(renderer, scene, camera) {
-    const speed = 1;
+    const speed = 200;
     let velocityY = 0;
     
     //checkBoundaries(model.position, -10000, 10000, -16000, 4000);
@@ -402,18 +399,6 @@ function animate(renderer, scene, camera) {
         mixer.update(delta);
 
 
-        if (mixer2) {
-            if ((isMoving || isMousemoving)&& isRedLight) {
-                if (!gunAction2.isRunning()) {
-                    gunAction2.setLoop(THREE.LoopOnce); // Set the loop mode to once
-                    gunAction2.clampWhenFinished = false; // Set clampWhenFinished to true to pause the animation on the last frame
-                    gunAction2.play();
-                }}}
-
-            mixer2.update(delta);
-        
-        
-
 
         
         renderer.render(scene, camera);
@@ -426,11 +411,14 @@ window.onload = function() {
     addlight(scene);
     createGround(scene);
     create_sky(scene);
-    createStartFinishLine(scene);
+    //createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
-    //addModel('imports/models/Building.glb',1300, -8000, -1000, Math.PI/2, scene);
-    
-    //addRoad('imports/models/Billboard.glb',1800, 0, -6400, -Math.PI/2, scene);
+
+    addModel('imports/models/Space_Truck.glb', 1000, 0,100 ,-4000, 0, scene);
+    addModel('imports/models/Earth.glb', 200, 0 , 5000, -28000, Math.PI / 2, scene);
+    addModel('imports/models/StarFighter.glb', 1000, 10000,200, -1000, 0, scene);
+    addModel('imports/models/Space_Station.glb', 2000, 5000,15000, -17000, 0, scene);
+
 
     loadModel2();
     loadModel(scene, camera, renderer);
