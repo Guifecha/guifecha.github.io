@@ -3,7 +3,7 @@ import { PointerLockControls } from './imports/js/PointerLockControls.js';
 import { FBXLoader } from './imports/js/FBXLoader.js';
 import { GLTFLoader } from './imports/js/GLTFLoader.js';
 
-
+let models = [];
 let model,model2, controls, mixer,moveAction,idleAction,gunAction2,mixer2;
 const clock = new THREE.Clock();
 let isJumping = false;
@@ -63,12 +63,12 @@ function createGround(scene) {
 
     var groundMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, map: groundTexture});
 
-    var groundGeometry = new THREE.PlaneGeometry( 25000, 25000 );
+    var groundGeometry = new THREE.PlaneGeometry( 50000, 50000 );
 
     var ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true; // Set the ground to receive shadows
     ground.rotation.x = - Math.PI / 2; // rotate it to lie flat
-    ground.position.set(0,0,10000)
+    ground.position.set(0,0,0)
 
     scene.add( ground );
 }
@@ -76,16 +76,22 @@ function createGround(scene) {
 function addlight(scene) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
-    const light2 = new THREE.DirectionalLight(0xffffff, 2);
-    light2.position.set(2000, 4000, -10000);
+    const light2 = new THREE.DirectionalLight(0xffffff, 1.5);
+    light2.position.set(20000, 20000, -10000);
+    const light3 = new THREE.DirectionalLight(0xffffff, 5);
+    light3.position.set(-20000, 10000, -10000);
     // Create an Object3D to serve as the target for the light
     const targetObject = new THREE.Object3D();
-    targetObject.position.set(0, 0, -5000); // replace x, y, z with the coordinates you want the light to point to
+    targetObject.position.set(0, 0, 5000); // replace x, y, z with the coordinates you want the light to point to
+    const targetObject2 = new THREE.Object3D();
+    targetObject2.position.set(20000, 20000, -10000)
+
 
     scene.add(targetObject); // add the target object to the scene
+    scene.add(targetObject2);
 
     light2.target = targetObject; // set the target of the light
-
+    light3.target = targetObject2;
 
     scene.add(light2);
     light2.castShadow = true;
@@ -155,6 +161,7 @@ function loadModel(scene, camera, renderer) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
         model.position.set(randomX, 0, 15000);
+        model.rotation.y = 0; // Adjust this value to rotate the model
         camera.position.set(0, 170, 0); // Adjust the y value to match the model's height
         camera.rotation.y = 0; // Adjust this value to rotate the camera
 
@@ -178,16 +185,21 @@ function loadModel(scene, camera, renderer) {
 }
 
 function loadModel2() {
-    const loader = new GLTFLoader();
-        loader.load('imports/models/Astronaut.glb', function (gltf) {
-        model2 = gltf.scene;
+    const loader = new FBXLoader();
+    loader.load('imports/models/astro_frog.fbx', function (model2) {
         model2.position.set(0, 0, -1000);
 
-        const startingRotation = 180 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
+        const startingRotation = 0//180 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
         model2.rotation.y = startingRotation;
 
-        const scaleFactor = 500; // Adjust this value to scale the model
+        const scaleFactor = 10; // Adjust this value to scale the model
         model2.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        console.log(model2.animations);
+        if (model2.animations && model2.animations.length > 0) {
+            mixer2 = new THREE.AnimationMixer(model2);
+            gunAction2 = mixer2.clipAction(model2.animations[11]); // shooting 11     wizard 6 nao faz nada 11 feitico
+        }
 
         scene.add(model2);
         model2.traverse(function (node) {
@@ -215,37 +227,92 @@ function checkBoundaries(object, minX, maxX, minZ, maxZ) {
 }
 
     
-    function addModel(path, scaleFactor, positionX,positionY, positionZ, rotation, scene) {
-        const loader = new GLTFLoader();
-        loader.load(path, function (gltf) {
-            const model = gltf.scene;
-    
-            // Set the model's position and scale here
-            model.position.set(positionX, positionY, positionZ);
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-            model.rotation.y = rotation; // Adjust this value to rotate the model
-            
+function addModel(path, scaleFactor, positionX,positionY, positionZ, rotation, scene) {
+    const loader = new GLTFLoader();
+    loader.load(path, function (gltf) {
+        const model = gltf.scene;
 
-            scene.add(model);
-            model.traverse(function (node) {
-                if (node.isMesh) {
-                    node.castShadow = true;
-                    //node.receiveShadow = true;
-                }
-            })
+        // Set the model's position and scale here
+        model.position.set(positionX, positionY, positionZ);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        model.rotation.y = rotation; // Adjust this value to rotate the model
+
+        scene.add(model);
+        models.push(model);
+        model.traverse(function (node) {
+            if (node.isMesh) {
+                node.castShadow = true;
+                //node.receiveShadow = true;
+            }
+        })
+    });
+}
+
+function addSun(path, scaleFactor, positionX,positionY, positionZ, rotation, color, scene) {
+    const loader = new GLTFLoader();
+    loader.load(path, function (gltf) {
+        const model = gltf.scene;
+
+        // Set the model's position and scale here
+        model.position.set(positionX, positionY, positionZ);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        model.rotation.y = rotation; // Adjust this value to rotate the model
+        model.traverse(function (node) { 
+            if (node.isMesh) {
+                node.material = new THREE.MeshBasicMaterial({color: color, side: THREE.DoubleSide});
+            }
         });
-    }
+        scene.add(model);
+        models.push(model);
+        
+        
+    });
+}
+
+function addEarth(path, scaleFactor, positionX,positionY, positionZ, rotation, scene) {
+    const loader = new GLTFLoader();
+    loader.load(path, function (gltf) {
+        const model = gltf.scene;
+
+        // Set the model's position and scale here
+        model.position.set(positionX, positionY, positionZ);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        model.rotation.y = rotation; // Adjust this value to rotate the model
+        
+        scene.add(model);
+        models.push(model);
+        
+        
+    });
+}
+
+function addImage(path,width,height,posx,posy,posz,rotationx,rotationy,rotationz,scene) {
+    var loader = new THREE.TextureLoader();
+    var material = new THREE.MeshBasicMaterial({
+    map: loader.load(path)
+    });
+    var geometry = new THREE.PlaneGeometry(width, height);
+    var mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(posx,posy,posz)
+    mesh.rotation.z = rotationz
+    mesh.rotation.y = rotationy
+    mesh.rotation.x = rotationx
+    
+    scene.add(mesh);
+}
 
 function toggleLight() {
-    if (!model2) return;
+    if (!model2) console.log("Model not loaded");
 
     if (isRedLight) {
+        console.log("Red light!");
         isRedLight = false;
         isTurningBack = true;
         targetRotation = Math.PI; 
     } else {
+        console.log("Green light!");
         targetRotation = 0;
- 
+        // Add a delay before setting isRedLight to true
         setTimeout(() => {
             isRedLight = true;
         }, 500); // Adjust this value to change the delay
@@ -255,7 +322,7 @@ function toggleLight() {
     setTimeout(toggleLight, time);
 }
 
-document.addEventListener('keydown', function(event) {
+/*document.addEventListener('keydown', function(event) {
     const key = event.key;
     if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
         showLoseScreen();
@@ -266,7 +333,7 @@ document.addEventListener('mousemove', function(event) {
     if (isRedLight && document.pointerLockElement) {
         showLoseScreen();
     }
-}, false);
+}, false);*/
 
 
 window.addEventListener('keydown', function(event) {
@@ -371,6 +438,7 @@ function animate(renderer, scene, camera) {
         //showWinScreen();
         
     }
+
     
 
     if (isJumping) {
@@ -398,7 +466,28 @@ function animate(renderer, scene, camera) {
         }}
         mixer.update(delta);
 
+        if (mixer2) {
+            if ((isMoving || isMousemoving)&& isRedLight) {
+                if (!gunAction2.isRunning()) {
+                    gunAction2.setLoop(THREE.LoopOnce); // Set the loop mode to once
+                    gunAction2.clampWhenFinished = false; // Set clampWhenFinished to true to pause the animation on the last frame
+                    gunAction2.play();
+                }}}
 
+            mixer2.update(delta);
+    
+
+        /*const modelBox = new THREE.Box3().setFromObject(model);
+
+        // Assuming `models` is an array containing all other models
+        models.forEach((otherModel) => {
+            const otherModelBox = new THREE.Box3().setFromObject(otherModel);
+            
+            if (modelBox.intersectsBox(otherModelBox)) {
+                console.log('Collision detected!');
+                // Handle collision (e.g., stop movement, end game, etc.)
+            }
+        });*/
 
         
         renderer.render(scene, camera);
@@ -414,11 +503,35 @@ window.onload = function() {
     //createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
 
-    addModel('imports/models/Space_Truck.glb', 1000, 0,100 ,-4000, 0, scene);
-    addModel('imports/models/Earth.glb', 200, 0 , 5000, -28000, Math.PI / 2, scene);
-    addModel('imports/models/StarFighter.glb', 1000, 10000,200, -1000, 0, scene);
-    addModel('imports/models/Space_Station.glb', 2000, 5000,15000, -17000, 0, scene);
+    addSun('imports/models/Sun.glb', 6000, 20000, 20000, -10000, 0, 0xffff00,scene);
 
+    addModel('imports/models/Space_Truck.glb', 1200, 4000,170 ,8000, 0, scene);
+    addModel('imports/models/Space_Truck.glb', 1400, -2000,170 ,4000, Math.PI/2, scene);
+
+    addModel('imports/models/Space_shuttle.glb', 100, 10000, 2100, 10000, 0, scene);
+
+    addEarth('imports/models/Earth.glb', 200, 0 , 5000, -28000, Math.PI / 2,scene);
+
+    addModel('imports/models/StarFighter.glb', 3000, 10000,600, -1000, Math.PI/2, scene);
+
+    addModel('imports/models/Space_Station.glb', 2000, 5000,15000, -17000, 0, scene);
+    
+    addModel('imports/models/asteroid.glb', 300, 10000, 10000, 10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 700, 12000, 5000, 20000, 0, scene);
+    addModel('imports/models/asteroid.glb', 300, 1000, 20000, 10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 500, 10000, 20000, 10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 400, -10000, 10000, -10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 100, -12000, 5000, -20000, 0, scene);
+    addModel('imports/models/asteroid.glb', 300, -1000, 10000, -10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 500, -10000, 20000, -10000, 0, scene);
+
+    addModel('imports/models/Flag.glb', 130, 3000, 0, 14000, 0, scene);
+
+    addModel('imports/models/Billboard.glb', 9, 6000, 0, -4000, Math.PI/2, scene);
+    addModel('imports/models/Billboard.glb', 9, -10000, 0, -4000, 3.5 * Math.PI/2, scene);
+
+    addImage('imports/textures/roma.jpg',2000,2000,5400,4800,-3500,0,0,0,scene);
+    addImage('imports/textures/roma2.jpeg',5500,2000,-9200,4700,-3500,0,0.4 * Math.PI/2,0,scene);
 
     loadModel2();
     loadModel(scene, camera, renderer);
