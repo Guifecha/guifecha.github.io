@@ -133,12 +133,12 @@ function create_sky(scene) {
 
     loader.load("imports/textures/sky.jpg", function(texture) {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(5, 5); // Repeat the texture 10 times in both directions
+        texture.repeat.set(5, 5); 
 
         var skymaterial = new THREE.MeshPhongMaterial({ 
             map: texture,
         });
-        skymaterial.side = THREE.BackSide; // Set the side property on skymaterial
+        skymaterial.side = THREE.BackSide; 
         var sky = new THREE.Mesh(skyGeo, skymaterial)
         sky.position.set(0, 0, 0);
         scene.add(sky);
@@ -161,9 +161,9 @@ function loadModel(scene, camera, renderer) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
         model.position.set(randomX, 0, 15000);
-        model.rotation.y = 0; // Adjust this value to rotate the model
-        camera.position.set(0, 170, 0); // Adjust the y value to match the model's height
-        camera.rotation.y = 0; // Adjust this value to rotate the camera
+        model.rotation.y = 0;
+        camera.position.set(0, 170, 0); 
+        camera.rotation.y = 0; 
 
         if (model.animations && model.animations.length > 0) {
             mixer = new THREE.AnimationMixer(model);
@@ -322,7 +322,7 @@ function toggleLight() {
     setTimeout(toggleLight, time);
 }
 
-/*document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function(event) {
     const key = event.key;
     if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
         showLoseScreen();
@@ -333,7 +333,7 @@ document.addEventListener('mousemove', function(event) {
     if (isRedLight && document.pointerLockElement) {
         showLoseScreen();
     }
-}, false);*/
+}, false);
 
 
 window.addEventListener('keydown', function(event) {
@@ -434,8 +434,8 @@ function animate(renderer, scene, camera) {
         isTurningBack = false;
     }
     
-    if (model.position.z > -1000) { 
-        //showWinScreen();
+    if (model.position.z < -1000) { 
+        showWinScreen();
         
     }
 
@@ -500,7 +500,7 @@ window.onload = function() {
     addlight(scene);
     createGround(scene);
     create_sky(scene);
-    //createStartFinishLine(scene);
+    createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
 
     addSun('imports/models/Sun.glb', 6000, 20000, 20000, -10000, 0, 0xffff00,scene);
