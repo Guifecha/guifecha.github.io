@@ -14,6 +14,8 @@ let isTurningBack = false;
 let gameOver = false;
 let isMoving = false;
 let isMousemoving = false;
+let gameStartTime = null;
+
 
 document.addEventListener('keydown', function (event) {
     keys[event.code] = true;
@@ -27,27 +29,6 @@ document.addEventListener('keyup', function (event) {
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 45, 70000);
-
-const manager = new THREE.LoadingManager();
-
-manager.onStart = function (url, itemsLoaded, itemsTotal) {
-    console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-};
-
-manager.onLoad = function () {
-    console.log('All resources loaded.');
-    // Hide your loading screen here
-    // Show your site here
-};
-
-manager.onProgress = function (url, itemsLoaded, itemsTotal) {
-    console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-};
-
-manager.onError = function (url) {
-    console.log('There was an error loading ' + url);
-};
-
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;
@@ -63,7 +44,7 @@ function createGround(scene) {
 
     var groundMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, map: groundTexture});
 
-    var groundGeometry = new THREE.PlaneGeometry( 50000, 50000 );
+    var groundGeometry = new THREE.PlaneGeometry( 70000, 70000 );
 
     var ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true; // Set the ground to receive shadows
@@ -74,9 +55,9 @@ function createGround(scene) {
 }
 
 function addlight(scene) {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
-    const light2 = new THREE.DirectionalLight(0xffffff, 1.5);
+    const light2 = new THREE.DirectionalLight(0xffffff, 1.9);
     light2.position.set(20000, 20000, -10000);
     const light3 = new THREE.DirectionalLight(0xffffff, 5);
     light3.position.set(-20000, 10000, -10000);
@@ -128,7 +109,7 @@ function createStartFinishLine(scene) {
 
 
 function create_sky(scene) {
-    var skyGeo = new THREE.SphereGeometry(30000, 25, 25);
+    var skyGeo = new THREE.SphereGeometry(40000, 25, 25);
     var loader  = new THREE.TextureLoader();
 
     loader.load("imports/textures/sky.jpg", function(texture) {
@@ -153,10 +134,8 @@ function createControls(camera, domElement) {
     }, false);
 }
 
-
-
 function loadModel(scene, camera, renderer) {
-    const loader = new FBXLoader(manager);
+    const loader = new FBXLoader();
     loader.load('imports/models/Beach.fbx', function (object) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
@@ -186,19 +165,20 @@ function loadModel(scene, camera, renderer) {
 
 function loadModel2() {
     const loader = new FBXLoader();
-    loader.load('imports/models/astro_frog.fbx', function (model2) {
+    loader.load('imports/models/astro_frog.fbx', function (loadedModel2) {
+        model2 = loadedModel2;
         model2.position.set(0, 0, -1000);
 
-        const startingRotation = 0//180 * (Math.PI / 180); // Adjust this value to set the starting rotation (in radians)
+        const startingRotation = -Math.PI / 2; // Start facing red light
         model2.rotation.y = startingRotation;
 
-        const scaleFactor = 10; // Adjust this value to scale the model
+        const scaleFactor = 18; // Adjust this value to scale the model
         model2.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
         console.log(model2.animations);
         if (model2.animations && model2.animations.length > 0) {
             mixer2 = new THREE.AnimationMixer(model2);
-            gunAction2 = mixer2.clipAction(model2.animations[11]); // shooting 11     wizard 6 nao faz nada 11 feitico
+            gunAction2 = mixer2.clipAction(model2.animations[11]); // shooting 11 wizard 6 nao faz nada 11 feitico
         }
 
         scene.add(model2);
@@ -302,38 +282,30 @@ function addImage(path,width,height,posx,posy,posz,rotationx,rotationy,rotationz
 }
 
 function toggleLight() {
-    if (!model2) console.log("Model not loaded");
+    if (!model2) {
+        console.log("Model not loaded");
+        return;
+    }
 
-    if (isRedLight) {
+    if (!isRedLight) {
         console.log("Red light!");
-        isRedLight = false;
-        isTurningBack = true;
-        targetRotation = Math.PI; 
-    } else {
-        console.log("Green light!");
-        targetRotation = 0;
-        // Add a delay before setting isRedLight to true
         setTimeout(() => {
             isRedLight = true;
-        }, 500); // Adjust this value to change the delay
+        }, 500);
+        isTurningBack = true;
+        targetRotation = 0; // 180 degrees for red light
+    } else {
+        console.log("Green light!");
+        isRedLight = false;
+        isTurningBack = true;
+        targetRotation = Math.PI; // 0 degrees for green light
     }
 
     let time = isRedLight ? 3000 : Math.random() * (10000 - 2000) + 2000; 
     setTimeout(toggleLight, time);
 }
 
-document.addEventListener('keydown', function(event) {
-    const key = event.key;
-    if (isRedLight && document.pointerLockElement &&(key === "w" || key === "a" || key === "s" || key === "d")) {
-        showLoseScreen();
-    }
-}, false);
 
-document.addEventListener('mousemove', function(event) {
-    if (isRedLight && document.pointerLockElement) {
-        showLoseScreen();
-    }
-}, false);
 
 
 window.addEventListener('keydown', function(event) {
@@ -365,31 +337,95 @@ window.addEventListener('redlightchange', function() {
     }
 });
 
+document.getElementById("startButton").addEventListener("click", function() {
+    document.getElementById("background").style.backgroundColor = "transparent";
+    document.getElementById('startScreen').style.display = 'none';
+    gameStartTime = Date.now();
+    // Lock the pointer and start the game
+    controls.lock();
+});
+
+
+// Show the start screen initially
+document.getElementById('startScreen').style.display = 'block';
+
+let canMove = false; // Variable to track whether movement is allowed
+
+document.getElementById("startButton").addEventListener("click", function() {
+    document.getElementById("background").style.backgroundColor = "transparent";
+    document.getElementById('startScreen').style.display = 'none';
+    gameStartTime = Date.now();
+    // Lock the pointer and start the game
+    controls.lock();
+});
+
+// Show the start screen initially
+document.getElementById('startScreen').style.display = 'block';
+/*
+document.getElementById("startButton").addEventListener("click", function() {
+    let countdownElement = document.getElementById('countdown');
+    let countdownValue = 3;
+    countdownElement.textContent = countdownValue;
+
+    let countdownInterval = setInterval(() => {
+        countdownValue--;
+        if (countdownValue > 0) {
+            countdownElement.textContent = countdownValue;
+        } else {
+            clearInterval(countdownInterval);
+            countdownElement.textContent = '';
+            gameStartTime = Date.now();
+            isRedLight = true; // Set light to red
+            targetRotation = 0; // Set rotation for red light
+            console.log("Start");
+            console.log(gameStartTime);
+            document.addEventListener('mousemove', function(event) {
+                if (isRedLight && document.pointerLockElement) {
+                    showLoseScreen();
+                }
+            }, false);
+            document.addEventListener('keydown', function(event) {
+                const key = event.key;
+                if (isRedLight && document.pointerLockElement && (key === "w" || key === "a" || key === "s" || key === "d")) {
+                    showLoseScreen();
+                }
+            }, false);
+
+            // Enable movement after 3 seconds
+            setTimeout(() => {
+                canMove = true;
+            }, 3000);
+        }
+    }, 1000);
+});
+*/
+
 
 function showLoseScreen() {
+    if (gameOver) return;
+    gameOver = true;
     setTimeout(function() {
-        if (gameOver) return;
-        gameOver = true;
         const messageDiv = document.getElementById('Screen');
-        console.log("You lose!")
-        messageDiv.textContent = "You lose!";
-        messageDiv.style.display = "block";
         const rematchButton = document.getElementById('rematchButton');
-        rematchButton.addEventListener('click', function() {
-            window.location.reload();
-        });
+        messageDiv.textContent = "You lost!";
+        messageDiv.style.display = "block";
+        rematchButton.style.display = "block";
+ 
+        ;
     }, 1200);
 }
+
 function showWinScreen() {
     if (gameOver) return;
     gameOver = true;
-    console.log("You win!")
-    const messageDiv = document.getElementById('Screen');
-    messageDiv.textContent = "You win!";
-    messageDiv.style.display = "block";
-    const rematchButton = document.getElementById('rematchButton');
-    rematchButton.addEventListener('click', function() {
-        window.location.reload();
+    const elapsedTime = (Date.now() - gameStartTime) / 1000; // Calculate elapsed time in seconds
+    const winMessage = `You won! Elapsed time: ${elapsedTime.toFixed(2)} seconds`;
+
+    document.getElementById('winMessage').textContent = winMessage;
+    document.getElementById('winScreen').style.display = 'block';
+
+    document.getElementById('mainMenuButton').addEventListener('click', function() {
+        location.reload();
     });
 }
 
@@ -428,14 +464,27 @@ function animate(renderer, scene, camera) {
         velocityY = 100;
     }
 
-    if (model2 && Math.abs(model2.rotation.y - targetRotation) > 0.01) {
-        model2.rotation.y += (targetRotation - model2.rotation.y) * 0.03; 
+    /*if (model2 && Math.abs(model2.rotation.y - targetRotation) > 0.01) {
+        model2.rotation.y += (targetRotation - model2.rotation.y) * 0.1; 
     } else if (isTurningBack) {
         isTurningBack = false;
+    }*/
+
+    if (model2 && isTurningBack) {
+        const rotationSpeed = 0.05; // Adjust this value to change the rotation speed
+        const currentRotation = model2.rotation.y;
+        const rotationDifference = targetRotation - currentRotation;
+
+        if (Math.abs(rotationDifference) > 0.01) {
+            model2.rotation.y += rotationDifference * rotationSpeed;
+        } else {
+            model2.rotation.y = targetRotation;
+            isTurningBack = false;
+        }
     }
     
     if (model.position.z < -1000) { 
-        showWinScreen();
+        //showWinScreen();
         
     }
 
@@ -466,7 +515,7 @@ function animate(renderer, scene, camera) {
         }}
         mixer.update(delta);
 
-        if (mixer2) {
+        /*if (mixer2) {
             if ((isMoving || isMousemoving)&& isRedLight) {
                 if (!gunAction2.isRunning()) {
                     gunAction2.setLoop(THREE.LoopOnce); // Set the loop mode to once
@@ -474,7 +523,7 @@ function animate(renderer, scene, camera) {
                     gunAction2.play();
                 }}}
 
-            mixer2.update(delta);
+            mixer2.update(delta);*/
     
 
         /*const modelBox = new THREE.Box3().setFromObject(model);
@@ -502,6 +551,7 @@ window.onload = function() {
     create_sky(scene);
     createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
+    
 
     addSun('imports/models/Sun.glb', 6000, 20000, 20000, -10000, 0, 0xffff00,scene);
 
@@ -510,7 +560,7 @@ window.onload = function() {
 
     addModel('imports/models/Space_shuttle.glb', 100, 10000, 2100, 10000, 0, scene);
 
-    addEarth('imports/models/Earth.glb', 200, 0 , 5000, -28000, Math.PI / 2,scene);
+    addEarth('imports/models/Earth.glb', 200, 0 , 9000, -20000, Math.PI / 2,scene);
 
     addModel('imports/models/StarFighter.glb', 3000, 10000,600, -1000, Math.PI/2, scene);
 
@@ -530,8 +580,8 @@ window.onload = function() {
     addModel('imports/models/Billboard.glb', 9, 6000, 0, -4000, Math.PI/2, scene);
     addModel('imports/models/Billboard.glb', 9, -10000, 0, -4000, 3.5 * Math.PI/2, scene);
 
-    addImage('imports/textures/roma.jpg',2000,2000,5400,4800,-3500,0,0,0,scene);
-    addImage('imports/textures/roma2.jpeg',5500,2000,-9200,4700,-3500,0,0.4 * Math.PI/2,0,scene);
+    addImage('imports/textures/solar_system.jpg',2000,2000,5400,4800,-3500,0,0,0,scene);
+    addImage('imports/textures/solar_system.jpg',5350,2050,-9000,4800,-4000,0,0.33* Math.PI/2,0,scene);
 
     loadModel2();
     loadModel(scene, camera, renderer);

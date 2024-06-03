@@ -7,20 +7,21 @@
 
 	<link rel="stylesheet" type="text/css" href="imports/css/styles.css">
 
-	<style>
-		body {
-			background-color: #000000;
-			margin: 0px;
-			overflow: hidden;
-		}
-	</style>
-
 </head>
 
 <body>
-	<div id="Screen" style="display: none;"></div>
-	<button id="restartButton" style="display: none;">Restart Game</button>
-	
-	<script type="module" src="main.js"></script>
+    <div id="background" class="fade-in"></div>
+    <div id="startScreen" class="fade-in">
+        <h1>Welcome to red light green light!</h1>
+        <button id="startButton">Start Game</button>
+    </div>
+    <div id="countdown" class="countdown"></div>
+
+    <div id="winScreen" class="screen">
+        <h1 id="winMessage"></h1>
+        <button id="mainMenuButton">Go to Main Menu</button>
+    </div>
+    
+    <script type="module" src="main.js"></script>
 </body>
 </html>
