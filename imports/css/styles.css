@@ -5,7 +5,7 @@ body {
     font-family: 'Arial', sans-serif;
 }
 
-#startScreen, #loseScreen {
+#startScreen{
     position: absolute;
     top: 50%;
     left: 50%;
@@ -16,12 +16,12 @@ body {
     z-index: 10;
 }
 
-#startScreen h1, #loseScreen h1 {
+#startScreen h1{
     font-size: 3em;
     margin-bottom: 20px;
 }
 
-#startScreen button, #loseScreen button {
+#startScreen button {
     padding: 10px 20px;
     font-size: 1.5em;
     cursor: pointer;
@@ -31,7 +31,7 @@ body {
     border-radius: 5px;
 }
 
-#startScreen button:hover, #loseScreen button:hover {
+#startScreen button:hover {
     background-color: #ff6347;
 }
 
@@ -47,20 +47,6 @@ body {
     font-size: 4em;
 }
 
-#rematchButton {
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 10px 20px;
-    font-size: 1.5em;
-    cursor: pointer;
-    background-color: #ff4500;
-    border: none;
-    color: white;
-    border-radius: 5px;
-    display: none;
-}
 
 #rematchButton:hover {
     background-color: #ff6347;
@@ -90,7 +76,7 @@ body {
     z-index: 5;
 }
 
-#winScreen {
+#winScreen , #loseScreen{
     display: none;
     position: absolute;
     top: 50%;

@@ -4,7 +4,7 @@ import { FBXLoader } from './imports/js/FBXLoader.js';
 import { GLTFLoader } from './imports/js/GLTFLoader.js';
 
 let models = [];
-let model,model2, controls, mixer,moveAction,idleAction,gunAction2,mixer2;
+let model,model2, controls, mixer,moveAction,idleAction,gunAction2,mixer2,spaceShuttle1,spaceShuttle2;
 const clock = new THREE.Clock();
 let isJumping = false;
 let keys = {};
@@ -15,6 +15,7 @@ let gameOver = false;
 let isMoving = false;
 let isMousemoving = false;
 let gameStartTime = null;
+let launchShuttles = false;
 
 
 document.addEventListener('keydown', function (event) {
@@ -44,7 +45,9 @@ function createGround(scene) {
 
     var groundMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, map: groundTexture});
 
-    var groundGeometry = new THREE.PlaneGeometry( 70000, 70000 );
+    var radius = 40000; // radius of the circle
+    var segments = 64; // number of segments (higher for more detail)
+    var groundGeometry = new THREE.CircleGeometry(radius, segments);
 
     var ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true; // Set the ground to receive shadows
@@ -57,10 +60,9 @@ function createGround(scene) {
 function addlight(scene) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
-    const light2 = new THREE.DirectionalLight(0xffffff, 1.9);
-    light2.position.set(20000, 20000, -10000);
-    const light3 = new THREE.DirectionalLight(0xffffff, 5);
-    light3.position.set(-20000, 10000, -10000);
+    const light2 = new THREE.DirectionalLight(0xffffff, 2.9);
+    light2.position.set(20000, 35000, -10000);
+    
     // Create an Object3D to serve as the target for the light
     const targetObject = new THREE.Object3D();
     targetObject.position.set(0, 0, 5000); // replace x, y, z with the coordinates you want the light to point to
@@ -72,7 +74,7 @@ function addlight(scene) {
     scene.add(targetObject2);
 
     light2.target = targetObject; // set the target of the light
-    light3.target = targetObject2;
+    
 
     scene.add(light2);
     light2.castShadow = true;
@@ -91,7 +93,7 @@ function addlight(scene) {
 function createStartFinishLine(scene) {
     const finishLineTexture = new THREE.TextureLoader().load('imports/textures/finish.png'); // Replace with the path to your finish line texture
     const finishLineMaterial = new THREE.MeshBasicMaterial({ map: finishLineTexture });
-    const finishLineGeometry = new THREE.BoxGeometry(20000, 10, 400); // Adjust these values to change the size of the finish line
+    const finishLineGeometry = new THREE.BoxGeometry(75000, 10, 3000); // Adjust these values to change the size of the finish line
 
     const finishLine = new THREE.Mesh(finishLineGeometry, finishLineMaterial);
     finishLine.position.set(0, 0, -1000); // Adjust these values to change the position of the finish line
@@ -103,7 +105,7 @@ function createStartFinishLine(scene) {
     const startingline = new THREE.Mesh(startinglineGeometry, startinglineMaterial);
     startingline.position.set(0, 0, -13500); // Adjust these values to change the position of the finish line
 
-    scene.add(startingline);
+    //scene.add(startingline);
     scene.add(finishLine);
 }
 
@@ -139,19 +141,26 @@ function loadModel(scene, camera, renderer) {
     loader.load('imports/models/Beach.fbx', function (object) {
         model = object;
         const randomX = Math.random() * 15000 - 7500;
-        model.position.set(randomX, 0, 15000);
-        model.rotation.y = 0;
+        model.position.set(randomX, 0, 35000);
+        model.rotation.y = Math.PI;
         camera.position.set(0, 170, 0); 
-        camera.rotation.y = 0; 
+        camera.rotation.y = Math.PI; 
+        const scaleFactor = 4; // Adjust this value to scale the model
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
         if (model.animations && model.animations.length > 0) {
             mixer = new THREE.AnimationMixer(model);
-            moveAction = mixer.clipAction(model.animations[1]); // runnning animation
+            moveAction = mixer.clipAction(model.animations[1]); // running animation
             idleAction = mixer.clipAction(model.animations[20]); // idle animation
-            
         }
         model.add(camera);
         scene.add(model);
+
+        // Set bounding box after the model is added to the scene
+        model.updateMatrixWorld(true);
+        model.boundingBox = new THREE.Box3().setFromObject(model);
+        
+
         model.traverse(function (node) {
             if (node.isMesh) {
                 node.castShadow = true;
@@ -172,13 +181,12 @@ function loadModel2() {
         const startingRotation = -Math.PI / 2; // Start facing red light
         model2.rotation.y = startingRotation;
 
-        const scaleFactor = 18; // Adjust this value to scale the model
+        const scaleFactor = 23; // Adjust this value to scale the model
         model2.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-        console.log(model2.animations);
         if (model2.animations && model2.animations.length > 0) {
             mixer2 = new THREE.AnimationMixer(model2);
-            gunAction2 = mixer2.clipAction(model2.animations[11]); // shooting 11 wizard 6 nao faz nada 11 feitico
+            gunAction2 = mixer2.clipAction(model2.animations[5]); // shooting 11 wizard 17 nao faz nada 11 feitico
         }
 
         scene.add(model2);
@@ -192,39 +200,37 @@ function loadModel2() {
     });
 }
 
-function checkBoundaries(object, minX, maxX, minZ, maxZ) {
-    if (object.x < minX) {
-        object.x = minX;
-    } else if (object.x > maxX) {
-        object.x = maxX;
-    }
+function checkBoundaries(object, centerX, centerZ, radius) {
+    const dx = object.position.x - centerX;
+    const dz = object.position.z - centerZ;
 
-    if (object.z < minZ) {
-        object.z = minZ;
-    } else if (object.z > maxZ) {
-        object.z = maxZ;
+    const distanceSquared = dx * dx + dz * dz;
+    const radiusSquared = radius * radius;
+
+    if (distanceSquared > radiusSquared) {
+        const angle = Math.atan2(dz, dx);
+        object.position.x = centerX + radius * Math.cos(angle);
+        object.position.z = centerZ + radius * Math.sin(angle);
     }
 }
 
+
     
-function addModel(path, scaleFactor, positionX,positionY, positionZ, rotation, scene) {
+function addModel(url, scale, x, y, z, rotation, scene, callback) {
     const loader = new GLTFLoader();
-    loader.load(path, function (gltf) {
-        const model = gltf.scene;
 
-        // Set the model's position and scale here
-        model.position.set(positionX, positionY, positionZ);
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        model.rotation.y = rotation; // Adjust this value to rotate the model
-
+    loader.load(url, function(gltf) {
+        const model = gltf.scene.children[0];
+        model.scale.set(scale, scale, scale);
+        model.position.set(x, y, z);
+        model.rotation.y = rotation;
         scene.add(model);
-        models.push(model);
-        model.traverse(function (node) {
-            if (node.isMesh) {
-                node.castShadow = true;
-                //node.receiveShadow = true;
-            }
-        })
+
+        if (callback) {
+            callback(model);
+        }
+    }, undefined, function(error) {
+        console.error(error);
     });
 }
 
@@ -288,23 +294,47 @@ function toggleLight() {
     }
 
     if (!isRedLight) {
-        console.log("Red light!");
-        setTimeout(() => {
-            isRedLight = true;
-        }, 500);
-        isTurningBack = true;
-        targetRotation = 0; // 180 degrees for red light
-    } else {
-        console.log("Green light!");
-        isRedLight = false;
-        isTurningBack = true;
-        targetRotation = Math.PI; // 0 degrees for green light
-    }
+    document.getElementById('lightIndicator').style.backgroundColor = 'red';
+    setTimeout(() => {
+        isRedLight = true;
+    }, 500);
+    isTurningBack = true;
+    targetRotation = 0; // 180 degrees for red light
+} else {
+    document.getElementById('lightIndicator').style.backgroundColor = 'green';
+    isRedLight = false;
+    isTurningBack = true;
+    targetRotation = Math.PI; // 0 degrees for green light
+}
 
-    let time = isRedLight ? 3000 : Math.random() * (10000 - 2000) + 2000; 
+    let time = isRedLight ? 2500 : Math.random() * 6000; 
     setTimeout(toggleLight, time);
 }
 
+
+
+
+
+function updateBoundingBoxes() {
+    if (model) {
+        model.boundingBox.setFromObject(model);
+    }
+    models.forEach((model) => {
+        if (model.boundingBox) {
+            model.updateMatrixWorld(true); // Ensure world matrices are up to date
+            model.boundingBox.setFromObject(model);
+        }
+    });
+}
+
+function checkCollision(boundingBox) {
+    for (let i = 0; i < models.length; i++) {
+        if (models[i].boundingBox && boundingBox.intersectsBox(models[i].boundingBox)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 
@@ -337,19 +367,9 @@ window.addEventListener('redlightchange', function() {
     }
 });
 
-document.getElementById("startButton").addEventListener("click", function() {
-    document.getElementById("background").style.backgroundColor = "transparent";
-    document.getElementById('startScreen').style.display = 'none';
-    gameStartTime = Date.now();
-    // Lock the pointer and start the game
-    controls.lock();
-});
-
 
 // Show the start screen initially
 document.getElementById('startScreen').style.display = 'block';
-
-let canMove = false; // Variable to track whether movement is allowed
 
 document.getElementById("startButton").addEventListener("click", function() {
     document.getElementById("background").style.backgroundColor = "transparent";
@@ -361,8 +381,11 @@ document.getElementById("startButton").addEventListener("click", function() {
 
 // Show the start screen initially
 document.getElementById('startScreen').style.display = 'block';
-/*
+
 document.getElementById("startButton").addEventListener("click", function() {
+    setTimeout(() => {
+            launchShuttles = true
+    }, 3000);
     let countdownElement = document.getElementById('countdown');
     let countdownValue = 3;
     countdownElement.textContent = countdownValue;
@@ -381,39 +404,40 @@ document.getElementById("startButton").addEventListener("click", function() {
             console.log(gameStartTime);
             document.addEventListener('mousemove', function(event) {
                 if (isRedLight && document.pointerLockElement) {
-                    showLoseScreen();
-                }
-            }, false);
+                    setTimeout(showLoseScreen, 1000);
+                
+        }}, false);
+            
             document.addEventListener('keydown', function(event) {
                 const key = event.key;
                 if (isRedLight && document.pointerLockElement && (key === "w" || key === "a" || key === "s" || key === "d")) {
-                    showLoseScreen();
+                    setTimeout(showLoseScreen, 1000);
                 }
             }, false);
 
-            // Enable movement after 3 seconds
-            setTimeout(() => {
-                canMove = true;
-            }, 3000);
+            
         }
     }, 1000);
 });
-*/
+
 
 
 function showLoseScreen() {
     if (gameOver) return;
     gameOver = true;
+    
     setTimeout(function() {
-        const messageDiv = document.getElementById('Screen');
-        const rematchButton = document.getElementById('rematchButton');
-        messageDiv.textContent = "You lost!";
-        messageDiv.style.display = "block";
-        rematchButton.style.display = "block";
- 
-        ;
-    }, 1200);
+        const loseMessage = 'You lost! You moved during a red light!';
+        document.getElementById('loseMessage').textContent = loseMessage;
+        document.getElementById('loseScreen').style.display = 'block';
+    }, 2000);
+
+    document.getElementById('mainMenuButton').addEventListener('click', function() {
+        location.reload();
+    });
 }
+
+
 
 function showWinScreen() {
     if (gameOver) return;
@@ -434,29 +458,71 @@ function showWinScreen() {
 function animate(renderer, scene, camera) {
     const speed = 200;
     let velocityY = 0;
-    
-    //checkBoundaries(model.position, -10000, 10000, -16000, 4000);
+
     // Calculate the forward and right vectors of the camera
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
     forward.y = 0;
     forward.normalize();
     const right = new THREE.Vector3();
-    right.crossVectors(forward, new THREE.Vector3(0, 1, 0));    
+    right.crossVectors(forward, new THREE.Vector3(0, 1, 0));
 
     if (gameOver) return;
-    
 
+    // Store the original position
+    const originalPosition = model.position.clone();
+
+    // Create a flag to check if movement is allowed
+    let canMoveForward = true;
+    let canMoveBackward = true;
+    let canMoveLeft = true;
+    let canMoveRight = true;
+
+    // Check potential collision positions
     if (keys['KeyW']) {
         model.position.addScaledVector(forward, speed);
+        updateBoundingBoxes();
+        if (checkCollision(model.boundingBox)) {
+            canMoveForward = false;
+        }
+        model.position.copy(originalPosition);
     }
     if (keys['KeyS']) {
         model.position.addScaledVector(forward, -speed);
+        updateBoundingBoxes();
+        if (checkCollision(model.boundingBox)) {
+            canMoveBackward = false;
+        }
+        model.position.copy(originalPosition);
     }
     if (keys['KeyA']) {
         model.position.addScaledVector(right, -speed);
+        updateBoundingBoxes();
+        if (checkCollision(model.boundingBox)) {
+            canMoveLeft = false;
+        }
+        model.position.copy(originalPosition);
     }
     if (keys['KeyD']) {
+        model.position.addScaledVector(right, speed);
+        updateBoundingBoxes();
+        if (checkCollision(model.boundingBox)) {
+            canMoveRight = false;
+        }
+        model.position.copy(originalPosition);
+    }
+
+    // Update position if movement is allowed
+    if (keys['KeyW'] && canMoveForward) {
+        model.position.addScaledVector(forward, speed);
+    }
+    if (keys['KeyS'] && canMoveBackward) {
+        model.position.addScaledVector(forward, -speed);
+    }
+    if (keys['KeyA'] && canMoveLeft) {
+        model.position.addScaledVector(right, -speed);
+    }
+    if (keys['KeyD'] && canMoveRight) {
         model.position.addScaledVector(right, speed);
     }
     if (keys['Space'] && !isJumping) {
@@ -464,14 +530,8 @@ function animate(renderer, scene, camera) {
         velocityY = 100;
     }
 
-    /*if (model2 && Math.abs(model2.rotation.y - targetRotation) > 0.01) {
-        model2.rotation.y += (targetRotation - model2.rotation.y) * 0.1; 
-    } else if (isTurningBack) {
-        isTurningBack = false;
-    }*/
-
     if (model2 && isTurningBack) {
-        const rotationSpeed = 0.05; // Adjust this value to change the rotation speed
+        const rotationSpeed = 0.05;
         const currentRotation = model2.rotation.y;
         const rotationDifference = targetRotation - currentRotation;
 
@@ -482,14 +542,20 @@ function animate(renderer, scene, camera) {
             isTurningBack = false;
         }
     }
-    
-    if (model.position.z < -1000) { 
-        //showWinScreen();
-        
+
+    if (model.position.z < -1000) {
+        showWinScreen();
     }
 
-    
+    if (launchShuttles) {
+        if (spaceShuttle1 && spaceShuttle2) {
+            spaceShuttle1.position.y += 30; // Replace with your actual space shuttle objects
+            spaceShuttle2.position.y += 30; // Adjust the value to control the speed of the movement
+        }
+    }
 
+    console.log(model.position.x, model.position.y, model.position.z)
+    
     if (isJumping) {
         velocityY -= 3;
         model.position.y += velocityY;
@@ -498,8 +564,9 @@ function animate(renderer, scene, camera) {
             model.position.y = 0;
             velocityY = 0;
             isJumping = false;
-        }   
+        }
     }
+
     const delta = clock.getDelta();
     if (mixer) {
         if (isMoving) {
@@ -512,36 +579,14 @@ function animate(renderer, scene, camera) {
                 moveAction.stop();
                 idleAction.play();
             }
-        }}
+        }
         mixer.update(delta);
 
-        /*if (mixer2) {
-            if ((isMoving || isMousemoving)&& isRedLight) {
-                if (!gunAction2.isRunning()) {
-                    gunAction2.setLoop(THREE.LoopOnce); // Set the loop mode to once
-                    gunAction2.clampWhenFinished = false; // Set clampWhenFinished to true to pause the animation on the last frame
-                    gunAction2.play();
-                }}}
-
-            mixer2.update(delta);*/
-    
-
-        /*const modelBox = new THREE.Box3().setFromObject(model);
-
-        // Assuming `models` is an array containing all other models
-        models.forEach((otherModel) => {
-            const otherModelBox = new THREE.Box3().setFromObject(otherModel);
-            
-            if (modelBox.intersectsBox(otherModelBox)) {
-                console.log('Collision detected!');
-                // Handle collision (e.g., stop movement, end game, etc.)
-            }
-        });*/
-
         
-        renderer.render(scene, camera);
-    
-        requestAnimationFrame(() => animate(renderer, scene, camera));
+    }
+    checkBoundaries(model, 0, 0, 40000);
+    renderer.render(scene, camera);
+    requestAnimationFrame(() => animate(renderer, scene, camera));
 }
 
 
@@ -552,38 +597,50 @@ window.onload = function() {
     createStartFinishLine(scene);
     createControls(camera, renderer.domElement);
     
-
-    addSun('imports/models/Sun.glb', 6000, 20000, 20000, -10000, 0, 0xffff00,scene);
-
-    addModel('imports/models/Space_Truck.glb', 1200, 4000,170 ,8000, 0, scene);
-    addModel('imports/models/Space_Truck.glb', 1400, -2000,170 ,4000, Math.PI/2, scene);
-
-    addModel('imports/models/Space_shuttle.glb', 100, 10000, 2100, 10000, 0, scene);
-
-    addEarth('imports/models/Earth.glb', 200, 0 , 9000, -20000, Math.PI / 2,scene);
-
-    addModel('imports/models/StarFighter.glb', 3000, 10000,600, -1000, Math.PI/2, scene);
-
-    addModel('imports/models/Space_Station.glb', 2000, 5000,15000, -17000, 0, scene);
     
-    addModel('imports/models/asteroid.glb', 300, 10000, 10000, 10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 700, 12000, 5000, 20000, 0, scene);
-    addModel('imports/models/asteroid.glb', 300, 1000, 20000, 10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 500, 10000, 20000, 10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 400, -10000, 10000, -10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 100, -12000, 5000, -20000, 0, scene);
-    addModel('imports/models/asteroid.glb', 300, -1000, 10000, -10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 500, -10000, 20000, -10000, 0, scene);
 
+    addSun('imports/models/Sun.glb', 8000, 20000, 35000, -10000, 0, 0xffff00,scene);
+
+    addModel('imports/models/Space_Truck.glb', 2600, 10000,200 ,8000, 0, scene);
+    addModel('imports/models/Space_Truck.glb', 3000, -10000,200 ,4000, Math.PI/2, scene);
+    addModel('imports/models/Space_Truck.glb', 3000, -30000,200 ,-1000, Math.PI/2, scene);
+    addModel('imports/models/Space_Truck.glb', 3000, 10000,200 ,20000, Math.PI/2, scene);
+
+    addModel('imports/models/Space_shuttle.glb',350, 20000, 9000, 10000, 0, scene, function(model) {
+        spaceShuttle1 = model;
+    });
+
+    addModel('imports/models/Space_shuttle.glb', 350, -20000, 9000, 10000, 0, scene, function(model) {
+        spaceShuttle2 = model;
+    });
+    addModel('imports/models/landing_pad.glb',2350, 20000, 0, 9000, 0, scene);
+
+    addModel('imports/models/landing_pad.glb', 2350, -20000, 0, 9000, 0, scene);
+
+
+    addEarth('imports/models/Earth.glb', 350, 12000 , 20000, -30000, Math.PI / 2,scene);
+
+    addModel('imports/models/StarFighter.glb', 6000, 10000,1200, 5000, Math.PI/2, scene);
+    addModel('imports/models/Space_Station.glb', 3000, -13000,5000, 0, 0, scene,);    
+    addModel('imports/models/asteroid.glb', 350, 10000, 16500, 10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 750, 12000, 8500, 20000, 0, scene);
+    addModel('imports/models/asteroid.glb', 350, 1000, 22500, 10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 550, 10000, 28000, 10000, Math.PI, scene);
+    addModel('imports/models/asteroid.glb', 450, -10000, 30000, -10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 150, -12000, 22000, -20000, Math.PI/2, scene);
+    addModel('imports/models/asteroid.glb', 350, -1000, 11000, -10000, 0, scene);
+    addModel('imports/models/asteroid.glb', 550, -10000, 30000, -10000, Math.PI, scene);
     addModel('imports/models/Flag.glb', 130, 3000, 0, 14000, 0, scene);
+    addModel('imports/models/Billboard.glb', 15, 17000, 0, -14000, Math.PI/2, scene);
+    addModel('imports/models/Billboard.glb', 15, -20000, 0, -14000, 3.5 * Math.PI/2, scene);
+    addModel('imports/models/space_colony.glb', 6000, 2000, 0, -20000, 0, scene);
 
-    addModel('imports/models/Billboard.glb', 9, 6000, 0, -4000, Math.PI/2, scene);
-    addModel('imports/models/Billboard.glb', 9, -10000, 0, -4000, 3.5 * Math.PI/2, scene);
-
-    addImage('imports/textures/solar_system.jpg',2000,2000,5400,4800,-3500,0,0,0,scene);
-    addImage('imports/textures/solar_system.jpg',5350,2050,-9000,4800,-4000,0,0.33* Math.PI/2,0,scene);
+    addImage('imports/textures/solar_system.jpg',8750,3850,15550  ,7800 ,-13000,       0,0,0,scene);
+    addImage('imports/textures/solar_system.jpg',8750,3850,-18300,7800 ,-13800,       0,0.33* Math.PI/2,0,scene);
 
     loadModel2();
     loadModel(scene, camera, renderer);
+    
+    
 };
 
