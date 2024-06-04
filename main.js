@@ -621,7 +621,7 @@ window.onload = function() {
         spaceShuttle1 = model;
     });
 
-    addModel('imports/models/Space_shuttle.glb', 350, -20000, 9000, 10000, 0, scene, function(model) {
+    addModel('imports/models/Space_Shuttle.glb', 350, -20000, 9000, 10000, 0, scene, function(model) {
         spaceShuttle2 = model;
     });
     addModel('imports/models/landing_pad.glb',2350, 20000, 0, 9000, 0, scene);
