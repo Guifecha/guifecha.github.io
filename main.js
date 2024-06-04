@@ -402,8 +402,6 @@ document.getElementById("startButton").addEventListener("click", function() {
             gameStartTime = Date.now();
             isRedLight = true; // Set light to red
             targetRotation = 0; // Set rotation for red light
-            console.log("Start");
-            console.log(gameStartTime);
             document.addEventListener('mousemove', function(event) {
                 if (isRedLight && document.pointerLockElement) {
                     showLoseScreen();
@@ -619,7 +617,7 @@ window.onload = function() {
     addModel('imports/models/Space_Truck.glb', 3000, -30000,200 ,-1000, Math.PI/2, scene);
     addModel('imports/models/Space_Truck.glb', 3000, 10000,200 ,20000, Math.PI/2, scene);
 
-    addModel('imports/models/Space_shuttle.glb',350, 20000, 9000, 10000, 0, scene, function(model) {
+    addModel('imports/models/Space_Shuttle.glb',350, 20000, 9000, 10000, 0, scene, function(model) {
         spaceShuttle1 = model;
     });
 
@@ -634,13 +632,13 @@ window.onload = function() {
     addEarth('imports/models/Earth.glb', 350, 12000 , 20000, -30000, Math.PI / 2,scene);
 
     addModel('imports/models/StarFighter.glb', 6000, 10000,1200, 5000, Math.PI/2, scene);
-    addModel('imports/models/Space_Station.glb', 3000, -13000,5000, 0, 0, scene,);  
+    addModel('imports/models/Space_station.glb', 3000, -13000,5000, 0, 0, scene,);  
       
-    addModel('imports/models/asteroid.glb', 350, 10000, 16500, 10000, 0, scene, function(model) {
+    addModel('imports/models/Asteroid.glb', 350, 10000, 16500, 10000, 0, scene, function(model) {
         asteroid1 = model;
     });
 
-    addModel('imports/models/asteroid.glb', 750, 12000, 8500, 20000, 0, scene, function(model) {
+    addModel('imports/models/Asteroid.glb', 750, 12000, 12500, 20000, 0, scene, function(model) {
     asteroid2 = model;
 });
 
