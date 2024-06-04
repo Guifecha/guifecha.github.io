@@ -227,6 +227,9 @@ function addModel(url, scale, x, y, z, rotation, scene, callback) {
         model.position.set(x, y, z);
         model.rotation.y = rotation;
         scene.add(model);
+        models.push(model);
+
+        model.boundingBox = new THREE.Box3().setFromObject(model);
 
         if (callback) {
             callback(model);
