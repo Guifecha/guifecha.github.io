@@ -456,7 +456,7 @@ function showWinScreen() {
 
 
 function animate(renderer, scene, camera) {
-    const speed = 200;
+    const speed = 50;
     let velocityY = 0;
 
     // Calculate the forward and right vectors of the camera
