@@ -5,6 +5,8 @@ import { GLTFLoader } from './imports/js/GLTFLoader.js';
 
 let models = [];
 let model,model2, controls, mixer,moveAction,idleAction,gunAction2,mixer2,spaceShuttle1,spaceShuttle2;
+let asteroid1, asteroid2, asteroid3, asteroid4, asteroid5, asteroid6, asteroid7, asteroid8;
+let asteroidAngle = 0;
 const clock = new THREE.Clock();
 let isJumping = false;
 let keys = {};
@@ -404,14 +406,14 @@ document.getElementById("startButton").addEventListener("click", function() {
             console.log(gameStartTime);
             document.addEventListener('mousemove', function(event) {
                 if (isRedLight && document.pointerLockElement) {
-                    setTimeout(showLoseScreen, 1000);
+                    showLoseScreen();
                 
         }}, false);
             
             document.addEventListener('keydown', function(event) {
                 const key = event.key;
                 if (isRedLight && document.pointerLockElement && (key === "w" || key === "a" || key === "s" || key === "d")) {
-                    setTimeout(showLoseScreen, 1000);
+                    showLoseScreen();
                 }
             }, false);
 
@@ -530,6 +532,19 @@ function animate(renderer, scene, camera) {
         velocityY = 100;
     }
 
+    
+    asteroidAngle += 0.01; // Adjust this value to control the speed of the rotation
+
+const asteroids = [asteroid1, asteroid2];
+const radius = 20000; // Adjust this value to control the size of the circle
+
+asteroids.forEach((asteroid) => {
+    if (asteroid) {
+        asteroid.position.x = radius * Math.cos(asteroidAngle);
+        asteroid.position.z = radius * Math.sin(asteroidAngle);
+    }
+});
+
     if (model2 && isTurningBack) {
         const rotationSpeed = 0.05;
         const currentRotation = model2.rotation.y;
@@ -553,8 +568,6 @@ function animate(renderer, scene, camera) {
             spaceShuttle2.position.y += 30; // Adjust the value to control the speed of the movement
         }
     }
-
-    console.log(model.position.x, model.position.y, model.position.z)
     
     if (isJumping) {
         velocityY -= 3;
@@ -621,15 +634,17 @@ window.onload = function() {
     addEarth('imports/models/Earth.glb', 350, 12000 , 20000, -30000, Math.PI / 2,scene);
 
     addModel('imports/models/StarFighter.glb', 6000, 10000,1200, 5000, Math.PI/2, scene);
-    addModel('imports/models/Space_Station.glb', 3000, -13000,5000, 0, 0, scene,);    
-    addModel('imports/models/asteroid.glb', 350, 10000, 16500, 10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 750, 12000, 8500, 20000, 0, scene);
-    addModel('imports/models/asteroid.glb', 350, 1000, 22500, 10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 550, 10000, 28000, 10000, Math.PI, scene);
-    addModel('imports/models/asteroid.glb', 450, -10000, 30000, -10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 150, -12000, 22000, -20000, Math.PI/2, scene);
-    addModel('imports/models/asteroid.glb', 350, -1000, 11000, -10000, 0, scene);
-    addModel('imports/models/asteroid.glb', 550, -10000, 30000, -10000, Math.PI, scene);
+    addModel('imports/models/Space_Station.glb', 3000, -13000,5000, 0, 0, scene,);  
+      
+    addModel('imports/models/asteroid.glb', 350, 10000, 16500, 10000, 0, scene, function(model) {
+        asteroid1 = model;
+    });
+
+    addModel('imports/models/asteroid.glb', 750, 12000, 8500, 20000, 0, scene, function(model) {
+    asteroid2 = model;
+});
+
+
     addModel('imports/models/Flag.glb', 130, 3000, 0, 14000, 0, scene);
     addModel('imports/models/Billboard.glb', 15, 17000, 0, -14000, Math.PI/2, scene);
     addModel('imports/models/Billboard.glb', 15, -20000, 0, -14000, 3.5 * Math.PI/2, scene);
